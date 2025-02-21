@@ -59,8 +59,6 @@ public static class PortfolioCalculatorService
             }
 
             totalFondsPortfolio = totalPercentage * GetPortfolioValue(date, investment.FondsInvestor);
-
-
         }
 
         return totalFondsPortfolio;
@@ -73,7 +71,6 @@ public static class PortfolioCalculatorService
 
         foreach (var investment in realEstateInvestments)
         {
-            // get transactions
             var transactions = allTransactions.Where(t => t.InvestmentId == investment.InvestmentId
                 && t.Date <= date).ToList();
 
@@ -95,23 +92,18 @@ public static class PortfolioCalculatorService
 
         foreach (var investment in stockInvestments)
         {
-            // get transactions
             var transactions = allTransactions.Where(t => t.InvestmentId == investment.InvestmentId && t.Date <= date)
-                .OrderBy(t => t.Date).ToList();
+                .ToList();
 
             decimal totalOfShare = 0;
             foreach (var transaction in transactions)
             {
-                if (transaction.Date > date)
-                    break; // delete before commit
-
-                // transaction.Type // Shares  Percentage
                 totalOfShare += transaction.Value;
             }
 
             //  get the value of the stock at the specific date, if not found get the previous day's value
             List<Quote> valuesOfStock = allQuotes.Where(q => q.ISIN == investment.ISIN && q.Date <= date)
-                .OrderBy(q => q.Date).ToList();
+                .ToList();
 
 
             decimal? currentValueOfStock = valuesOfStock.FirstOrDefault(v => v.Date == date)?.PricePerShare;
@@ -128,5 +120,4 @@ public static class PortfolioCalculatorService
         return totalStockPortfolio;
     }
 
-    // private static DateTime GetClosestDay(IList<DateTime> dateTimes)
 }

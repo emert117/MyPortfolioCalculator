@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.12.35728.132 d17.12
+VisualStudioVersion = 17.12.35728.132
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyPortfolioCalculator.App", "MyPortfolioCalculator.App\MyPortfolioCalculator.App.csproj", "{E69C3D98-5A0E-4E98-BC6E-C7D047AFEE45}"
 EndProject
@@ -10,6 +10,13 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyPortfolioCalculator.Models", "MyPortfolioCalculator.Models\MyPortfolioCalculator.Models.csproj", "{94C64D0F-BE8F-47A7-B8B8-675B4604F655}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyPortfolioCalculator.Helpers", "MyPortfolioCalculator.Helpers\MyPortfolioCalculator.Helpers.csproj", "{CF58639F-51CA-463D-97D1-5C2410248108}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{216E07F2-BB1D-4C6D-A2B0-2B47EA34D161}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyPortfolioCalculator.Business.Tests", "MyPortfolioCalculator.Business.Tests\MyPortfolioCalculator.Business.Tests.csproj", "{9D77E03A-F59D-4915-A2CE-63B94146F9A4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +40,10 @@ Global
 		{CF58639F-51CA-463D-97D1-5C2410248108}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CF58639F-51CA-463D-97D1-5C2410248108}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CF58639F-51CA-463D-97D1-5C2410248108}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9D77E03A-F59D-4915-A2CE-63B94146F9A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9D77E03A-F59D-4915-A2CE-63B94146F9A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9D77E03A-F59D-4915-A2CE-63B94146F9A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9D77E03A-F59D-4915-A2CE-63B94146F9A4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -10,7 +10,7 @@ internal class Program
         Console.WriteLine("Portfolio Calculator");
         Console.Write("Please enter date and investor id: ");
 
-        //Console.WriteLine(PortfolioCalculatorService.GetPortfolioValue(new DateTime(2019,11,17), "Investor0"));
+        Console.WriteLine(PortfolioCalculatorService.GetPortfolioValue(new DateTime(2019,11,17), "Investor0"));
 
         var line = Console.ReadLine();
         while (!string.IsNullOrWhiteSpace(line))
@@ -19,10 +19,11 @@ internal class Program
             var date = DateTime.Parse(input[0]);
             var investorId = input[1];
 
-            /* your code here */
             Console.WriteLine("Calculating...");
+            Console.WriteLine(DateTime.Now);
             decimal totalPortfolio = PortfolioCalculatorService.GetPortfolioValue(date, investorId);
             Console.WriteLine($"Total portfolio: {totalPortfolio}");
+            Console.WriteLine(DateTime.Now);
 
             Console.WriteLine("---------------");
             Console.Write("Please enter date and investor id (to exit the program just press Enter): ");

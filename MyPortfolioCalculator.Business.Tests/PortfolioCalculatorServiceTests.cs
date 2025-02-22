@@ -17,31 +17,38 @@ public sealed class PortfolioCalculatorServiceTests
     [TestInitialize]
     public async Task Initialize()
     {
-        
+
     }
 
     [TestMethod]
-    public void Investor_Got_Only_Stock_Got_Transaction_and_Quoto_at_Exact_Date()
+    public async Task Investor_Got_Only_Stock_Got_Transaction_and_Quoto_at_Exact_Date()
     {
         // Arrange
-        
+
 
         // Act
-        decimal total = PortfolioCalculatorService.GetPortfolioValue(new DateTime(2016,01, 05), "Investor0");
+        decimal total = await PortfolioCalculatorService.GetPortfolioValueAsync(new DateTime(2016, 01, 05), "Investor0");
 
         // Assert
         Assert.AreEqual(228038.5914M, total, 0.001M, "Wrong total");
     }
 
     [TestMethod]
-    public void Investor_Got_Only_Stock_Got_No_Exact_Date_Transaction_and_No_Exact_Date_Quote()
+    public async Task Investor_Got_Only_Stock_Got_No_Exact_Date_Transaction_and_No_Exact_Date_Quote()
     {
         // Arrange
 
         // Act
-        decimal total = PortfolioCalculatorService.GetPortfolioValue(new DateTime(2016, 01, 08), "Investor0");
+        decimal total = await PortfolioCalculatorService.GetPortfolioValueAsync(new DateTime(2016, 01, 08), "Investor0");
 
         // Assert
         Assert.AreEqual(228038.5914M, total, 0.001M, "Wrong total");
+    }
+
+    [TestMethod]
+    public async Task Calculate_Simple_RealEstate_Investment()
+    {
+        decimal total = await PortfolioCalculatorService.GetPortfolioValueAsync(new DateTime(2019, 07, 08), "Investor1");
+        Assert.AreEqual(1170894.0M, total, 0.001M, "Wrong total");
     }
 }

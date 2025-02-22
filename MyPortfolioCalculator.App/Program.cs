@@ -1,11 +1,10 @@
 ﻿using MyPortfolioCalculator.Business;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace MyPortfolioCalculator.App;
 
 internal class Program
 {
-    static void Main(string[] args)
+    static async Task Main(string[] args)
     {
         Console.WriteLine("Portfolio Calculator");
         Console.Write("Please enter date and investor id: ");
@@ -18,7 +17,7 @@ internal class Program
             var investorId = input[1];
 
             Console.WriteLine("Calculating...");
-            decimal totalPortfolio = PortfolioCalculatorService.GetPortfolioValue(date, investorId);
+            decimal totalPortfolio = await PortfolioCalculatorService.GetPortfolioValueAsync(date, investorId);
             Console.WriteLine($"Total portfolio: {totalPortfolio}");
 
             Console.WriteLine("---------------");

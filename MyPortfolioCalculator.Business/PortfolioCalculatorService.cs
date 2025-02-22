@@ -1,123 +1,127 @@
-﻿using System;
+﻿using MyPortfolioCalculator.Helpers;
+using MyPortfolioCalculator.Models;
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using MyPortfolioCalculator.Helpers;
-using MyPortfolioCalculator.Models;
 
 namespace MyPortfolioCalculator.Business;
 
 public static class PortfolioCalculatorService
 {
-
-    private static readonly ReadOnlyCollection<Investment> allInvestments;
-    private static readonly ReadOnlyCollection<Transaction> allTransactions;
-    private static readonly ReadOnlyCollection<Quote> allQuotes;
+    private static readonly IReadOnlyCollection<Investment> _allInvestments;
+    private static readonly IReadOnlyCollection<Transaction> _allTransactions;
+    private static readonly IReadOnlyCollection<Quote> _allQuotes;
+    private static readonly ParallelOptions _parallelOptions;
 
     static PortfolioCalculatorService()
     {
-        allInvestments = CSVHelper.GetListOfType<Investment>("Investments.csv");
-        allTransactions = CSVHelper.GetListOfType<Transaction>("Transactions.csv");
-        allQuotes = CSVHelper.GetListOfType<Quote>("Quotes.csv");
-    }
+        _allInvestments = CSVHelper.GetListOfType<Investment>("Investments.csv");
+        _allTransactions = CSVHelper.GetListOfType<Transaction>("Transactions.csv");
+        _allQuotes = CSVHelper.GetListOfType<Quote>("Quotes.csv");
 
-    public static decimal GetPortfolioValue(DateTime date, string investorId)
-    {
-        // get investments of the investor
-        ReadOnlyCollection<Investment> investmentsOfInvestor = allInvestments.Where(i => i.InvestorId == investorId).ToList().AsReadOnly();
-        
-        // calculate share value
-        decimal totalStockPortfolio = CalculateStockPortfolio(date, investmentsOfInvestor);
-        
-        // calculate realestate value
-        decimal totalRealEstatePortfolio = CalculateRealEstatePortfolio(date, investmentsOfInvestor);
-
-        // get funds and percentage of funds of the investor
-        decimal totalFondsPortfolio = CalculateFondsPortfolio(date, investmentsOfInvestor);
-
-        decimal totalPortfolio = totalStockPortfolio + totalRealEstatePortfolio + totalFondsPortfolio;
-        return totalPortfolio;
-    }
-
-    private static decimal CalculateFondsPortfolio(DateTime date, ReadOnlyCollection<Investment> investmentsOfInvestor)
-    {
-        List<Investment> fondsInvestment = investmentsOfInvestor.Where(i => i.InvestmentType == "Fonds").ToList();
-        decimal totalFondsPortfolio = 0;
-
-        foreach (var investment in fondsInvestment) 
+        // Configure parallel options - adjust MaxDegreeOfParallelism based on your needs
+        _parallelOptions = new ParallelOptions
         {
-            // get transactions
-            var transactions = allTransactions.Where(t => t.InvestmentId == investment.InvestmentId
-                && t.Date <= date).ToList();
-
-            decimal totalPercentage = 0;
-            foreach (var transaction in transactions) 
-            {
-                totalPercentage += transaction.Value;
-            }
-
-            totalFondsPortfolio = totalPercentage * GetPortfolioValue(date, investment.FondsInvestor);
-        }
-
-        return totalFondsPortfolio;
+            MaxDegreeOfParallelism = Environment.ProcessorCount
+        };
     }
 
-    private static decimal CalculateRealEstatePortfolio(DateTime date, ReadOnlyCollection<Investment> investments)
+    public static async Task<decimal> GetPortfolioValueAsync(DateTime date, string investorId)
     {
-        var realEstateInvestments = investments.Where(i => i.InvestmentType == "RealEstate").ToList().AsReadOnly();
-        decimal totalRealEstatePortfolio = 0;
+        var investorInvestments = _allInvestments
+            .Where(i => i.InvestorId == investorId)
+            .ToList()
+            .AsReadOnly();
 
-        foreach (var investment in realEstateInvestments)
+        // Calculate different portfolio types in parallel
+        var tasks = new[]
         {
-            var transactions = allTransactions.Where(t => t.InvestmentId == investment.InvestmentId
-                && t.Date <= date).ToList();
+            Task.Run(() => CalculateStockPortfolio(date, investorInvestments)),
+            Task.Run(() => CalculateRealEstatePortfolio(date, investorInvestments)),
+            Task.Run(() => CalculateFondsPortfolio(date, investorInvestments))
+        };
 
-            decimal totalOfRealEstate = 0;
-            foreach (var transaction in transactions) 
-            {
-                totalOfRealEstate += transaction.Value;
-            }
-            totalRealEstatePortfolio += totalOfRealEstate;
-        }
-
-        return totalRealEstatePortfolio;
+        var results = await Task.WhenAll(tasks);
+        return results.Sum();
     }
 
-    private static decimal CalculateStockPortfolio(DateTime date, ReadOnlyCollection<Investment> investments)
+    private static decimal CalculateFondsPortfolio(DateTime date, IReadOnlyCollection<Investment> investments)
     {
-        var stockInvestments = investments.Where(i => i.InvestmentType == "Stock").ToList().AsReadOnly();
-        decimal totalStockPortfolio = 0;
+        var fondsInvestments = investments.Where(i => i.InvestmentType == "Fonds").ToList();
 
-        foreach (var investment in stockInvestments)
+        // Use ConcurrentDictionary to safely store results from parallel operations
+        var results = new ConcurrentDictionary<string, decimal>();
+
+        Parallel.ForEach(fondsInvestments, _parallelOptions, investment =>
         {
-            var transactions = allTransactions.Where(t => t.InvestmentId == investment.InvestmentId && t.Date <= date)
-                .ToList();
+            var totalPercentage = GetTransactionsTotal(investment.InvestmentId, date);
+            var portfolioValue = CalculateStockPortfolio(date, fondsInvestments);
+            results.TryAdd(investment.InvestmentId, totalPercentage * portfolioValue);
+        });
 
-            decimal totalOfShare = 0;
-            foreach (var transaction in transactions)
-            {
-                totalOfShare += transaction.Value;
-            }
-
-            //  get the value of the stock at the specific date, if not found get the previous day's value
-            List<Quote> valuesOfStock = allQuotes.Where(q => q.ISIN == investment.ISIN && q.Date <= date)
-                .ToList();
-
-
-            decimal? currentValueOfStock = valuesOfStock.FirstOrDefault(v => v.Date == date)?.PricePerShare;
-            if (currentValueOfStock == null)
-            {
-                // there is no Stock value for the specified day
-                // get the closest day's value
-                var closestValue = valuesOfStock.Where(v => v.Date < date).Max(v => v.Date);
-                currentValueOfStock = valuesOfStock.FirstOrDefault(v => v.Date == closestValue)?.PricePerShare;
-            }
-
-            totalStockPortfolio += totalOfShare * currentValueOfStock.Value;
-        }
-        return totalStockPortfolio;
+        return results.Values.Sum();
     }
 
+    private static decimal CalculateRealEstatePortfolio(DateTime date, IReadOnlyCollection<Investment> investments)
+    {
+        var realEstateInvestments = investments.Where(i => i.InvestmentType == "RealEstate").ToList();
+
+        return realEstateInvestments
+            .AsParallel()
+            .WithDegreeOfParallelism(Environment.ProcessorCount)
+            .Select(investment => GetTransactionsTotal(investment.InvestmentId, date))
+            .Sum();
+    }
+
+    private static decimal CalculateStockPortfolio(DateTime date, IReadOnlyCollection<Investment> investments)
+    {
+        var stockInvestments = investments.Where(i => i.InvestmentType == "Stock").ToList();
+        var results = new ConcurrentDictionary<string, decimal>();
+
+        Parallel.ForEach(stockInvestments, _parallelOptions, investment =>
+        {
+            var shareTotal = GetTransactionsTotal(investment.InvestmentId, date);
+            var stockPrice = GetStockPrice(investment.ISIN, date);
+            results.TryAdd(investment.InvestmentId, shareTotal * stockPrice);
+        });
+
+        return results.Values.Sum();
+    }
+
+    private static decimal GetTransactionsTotal(string investmentId, DateTime date)
+    {
+        // Using parallel processing for large transaction sets
+        return _allTransactions
+            .AsParallel()
+            .Where(t => t.InvestmentId == investmentId && t.Date <= date)
+            .Sum(t => t.Value);
+    }
+
+    private static decimal GetStockPrice(string isin, DateTime date)
+    {
+        var relevantQuotes = _allQuotes
+            .Where(q => q.ISIN == isin && q.Date <= date)
+            .ToList();
+
+        var currentDayQuote = relevantQuotes
+            .FirstOrDefault(v => v.Date == date)?
+            .PricePerShare;
+
+        if (currentDayQuote.HasValue)
+            return currentDayQuote.Value;
+
+        var mostRecentQuote = relevantQuotes
+            .OrderByDescending(v => v.Date)
+            .FirstOrDefault()?
+            .PricePerShare;
+
+        if (!mostRecentQuote.HasValue)
+            throw new InvalidOperationException($"No stock price found for ISIN {isin} on or before {date}");
+
+        return mostRecentQuote.Value;
+    }
+    
 }

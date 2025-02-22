@@ -51,4 +51,30 @@ public sealed class PortfolioCalculatorServiceTests
         decimal total = await PortfolioCalculatorService.GetPortfolioValueAsync(new DateTime(2019, 07, 08), "Investor1");
         Assert.AreEqual(1170894.0M, total, 0.001M, "Wrong total");
     }
+
+    [TestMethod]
+    public async Task Calculate_Fonds_Investment()
+    {
+        // Arrange
+
+
+        // Act
+        decimal total = await PortfolioCalculatorService.GetPortfolioValueAsync(new DateTime(2019, 08, 05), "Fonds0");
+
+        // Assert
+        Assert.AreEqual(2404497.270M, total, 0.001M, "Wrong total");
+    }
+
+    [TestMethod]
+    public async Task Calculate_Investor_Fond_Investment_Who_Has_Only_One_Fond_Investment()
+    {
+        // Arrange
+
+
+        // Act
+        decimal total = await PortfolioCalculatorService.GetPortfolioValueAsync(new DateTime(2019, 08, 05), "Investor2");
+
+        // Assert
+        Assert.AreEqual(50518.487642700M, total, 0.001M, "Wrong total");
+    }
 }

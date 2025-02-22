@@ -1,11 +1,7 @@
-﻿using MyPortfolioCalculator.Helpers;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
+using MyPortfolioCalculator.Helpers;
 using MyPortfolioCalculator.Models;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MyPortfolioCalculator.Business;
 
@@ -22,7 +18,6 @@ public static class PortfolioCalculatorService
         _allTransactions = CSVHelper.GetListOfType<Transaction>("Transactions.csv");
         _allQuotes = CSVHelper.GetListOfType<Quote>("Quotes.csv");
 
-        // Configure parallel options - adjust MaxDegreeOfParallelism based on your needs
         _parallelOptions = new ParallelOptions
         {
             MaxDegreeOfParallelism = Environment.ProcessorCount
@@ -41,33 +36,38 @@ public static class PortfolioCalculatorService
         {
             Task.Run(() => CalculateStockPortfolio(date, investorInvestments)),
             Task.Run(() => CalculateRealEstatePortfolio(date, investorInvestments)),
-            Task.Run(() => CalculateFondsPortfolio(date, investorInvestments))
+            CalculateFondsPortfolioAsync(date, investorInvestments) // Changed to use async version
         };
 
         var results = await Task.WhenAll(tasks);
         return results.Sum();
     }
 
-    private static decimal CalculateFondsPortfolio(DateTime date, IReadOnlyCollection<Investment> investments)
+    private static async Task<decimal> CalculateFondsPortfolioAsync(DateTime date, IReadOnlyCollection<Investment> investments)
     {
         var fondsInvestments = investments.Where(i => i.InvestmentType == "Fonds").ToList();
+        if (fondsInvestments.Count == 0)
+            return 0;
 
-        // Use ConcurrentDictionary to safely store results from parallel operations
-        var results = new ConcurrentDictionary<string, decimal>();
-
-        Parallel.ForEach(fondsInvestments, _parallelOptions, investment =>
+        // Create tasks for each investment calculation
+        var tasks = fondsInvestments.Select(async investment =>
         {
             var totalPercentage = GetTransactionsTotal(investment.InvestmentId, date);
-            var portfolioValue = CalculateStockPortfolio(date, fondsInvestments);
-            results.TryAdd(investment.InvestmentId, totalPercentage * portfolioValue);
+            var portfolioValue = await GetPortfolioValueAsync(date, investment.FondsInvestor);
+            return totalPercentage * portfolioValue;
         });
 
-        return results.Values.Sum();
+        // Wait for all calculations to complete and sum the results
+        var results = await Task.WhenAll(tasks);
+        var sum = results.Sum();
+        return sum;
     }
 
     private static decimal CalculateRealEstatePortfolio(DateTime date, IReadOnlyCollection<Investment> investments)
     {
         var realEstateInvestments = investments.Where(i => i.InvestmentType == "RealEstate").ToList();
+        if (realEstateInvestments.Count == 0)
+            return 0;
 
         return realEstateInvestments
             .AsParallel()
@@ -79,6 +79,9 @@ public static class PortfolioCalculatorService
     private static decimal CalculateStockPortfolio(DateTime date, IReadOnlyCollection<Investment> investments)
     {
         var stockInvestments = investments.Where(i => i.InvestmentType == "Stock").ToList();
+        if (stockInvestments.Count == 0)
+            return 0;
+
         var results = new ConcurrentDictionary<string, decimal>();
 
         Parallel.ForEach(stockInvestments, _parallelOptions, investment =>
@@ -93,7 +96,6 @@ public static class PortfolioCalculatorService
 
     private static decimal GetTransactionsTotal(string investmentId, DateTime date)
     {
-        // Using parallel processing for large transaction sets
         return _allTransactions
             .AsParallel()
             .Where(t => t.InvestmentId == investmentId && t.Date <= date)
@@ -123,5 +125,4 @@ public static class PortfolioCalculatorService
 
         return mostRecentQuote.Value;
     }
-    
 }

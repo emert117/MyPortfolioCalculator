@@ -1,13 +1,6 @@
 InvestorId;InvestmentId;InvestmentType;ISIN;City;FondsInvestor
 Investor0;Investment0;Stock;ISIN0;;
 Investor1;Investment1;RealEstate;;City1769;
-Investor2;Investment38011;Fonds;;;Fonds0
-Investor3;Investment44081;Fonds;;;Fonds1
-Investor3;Investment44081;Fonds;;;Fonds2
-Investor4;Investment42095;Fonds;;;Fonds3
-Fonds0;Investment20220;Stock;ISIN35;;
-Fonds1;Investment21652;Stock;ISIN158;;
-Fonds2;Investment15134;Stock;ISIN111;;
-Fonds3;Investment24716;Stock;ISIN140;;
-Fonds4;Investment26769;RealEstate;;City1769;
-Fonds5;Investment9501;Stock;ISIN62;;
+Investor2;Investment2;Fonds;;;Fonds0
+Fonds0;Investment3;Stock;ISIN1;;
+Fonds0;Investment4;RealEstate;;City1769;

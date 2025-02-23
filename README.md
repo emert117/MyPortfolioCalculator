@@ -43,7 +43,7 @@ You can run the application in two ways:
    - Include a valid date
    - Include a valid investor ID
 
-
+![screenshot](v1.gif)
 
 ## Support
 

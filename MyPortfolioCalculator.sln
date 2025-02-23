@@ -14,6 +14,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{216E07F2-BB1D-4C6D-A2B0-2B47EA34D161}"
 	ProjectSection(SolutionItems) = preProject
 		README.md = README.md
+		v1.gif = v1.gif
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyPortfolioCalculator.Business.Tests", "MyPortfolioCalculator.Business.Tests\MyPortfolioCalculator.Business.Tests.csproj", "{9D77E03A-F59D-4915-A2CE-63B94146F9A4}"
